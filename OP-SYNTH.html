@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -186,7 +187,6 @@ canvas.mini-knob { width: 30px; height: 30px; cursor: ns-resize; touch-action: n
 <body>
 <div class="app">
 
-<!-- HEADER -->
 <div class="header">
   <span class="logo">OP-SYNTH</span>
   <div class="header-right">
@@ -195,7 +195,6 @@ canvas.mini-knob { width: 30px; height: 30px; cursor: ns-resize; touch-action: n
   </div>
 </div>
 
-<!-- SCREEN -->
 <div class="screen panel" style="padding:8px;">
   <div class="screen-top">
     <span class="screen-engine" id="screenEngine">FM SYNTH</span>
@@ -212,7 +211,6 @@ canvas.mini-knob { width: 30px; height: 30px; cursor: ns-resize; touch-action: n
   </div>
 </div>
 
-<!-- ENGINE TABS -->
 <div class="engine-tabs" id="engineTabs">
   <div class="eng-tab active" data-eng="fm">FM</div>
   <div class="eng-tab" data-eng="sub">SUB</div>
@@ -220,17 +218,14 @@ canvas.mini-knob { width: 30px; height: 30px; cursor: ns-resize; touch-action: n
   <div class="eng-tab" data-eng="smp">SMPL</div>
 </div>
 
-<!-- MAIN KNOBS -->
 <div class="panel">
   <div class="section-label" id="engSectionLabel">Oscillator</div>
   <div class="knobs-row" id="knobsRow"></div>
 
-  <!-- ENGINE SUB OPTIONS -->
   <div class="sub-tabs" id="subTabs"></div>
   <div class="knobs-row" id="knobsRow2"></div>
 </div>
 
-<!-- XY PAD -->
 <div class="panel" style="padding-bottom:4px;">
   <div class="section-label">XY Pad</div>
   <div class="xy-pad" id="xyPad">
@@ -246,7 +241,6 @@ canvas.mini-knob { width: 30px; height: 30px; cursor: ns-resize; touch-action: n
   </div>
 </div>
 
-<!-- LFO -->
 <div class="panel">
   <div class="section-label">LFO</div>
   <div class="lfo-row">
@@ -269,13 +263,11 @@ canvas.mini-knob { width: 30px; height: 30px; cursor: ns-resize; touch-action: n
   </div>
 </div>
 
-<!-- EFFECTS -->
 <div class="panel">
   <div class="section-label">Effects Chain</div>
   <div class="fx-grid" id="fxGrid"></div>
 </div>
 
-<!-- SAMPLER -->
 <div class="panel" id="samplerPanel">
   <div class="section-label">Sampler</div>
   <div class="sampler-grid" id="samplerGrid"></div>
@@ -291,7 +283,6 @@ canvas.mini-knob { width: 30px; height: 30px; cursor: ns-resize; touch-action: n
   </div>
 </div>
 
-<!-- SEQUENCER -->
 <div class="panel">
   <div class="seq-header">
     <span class="seq-title">Sequencer — 16 steps</span>
@@ -301,7 +292,6 @@ canvas.mini-knob { width: 30px; height: 30px; cursor: ns-resize; touch-action: n
   <div class="seq-row-labels" id="seqDots"></div>
 </div>
 
-<!-- TRANSPORT -->
 <div class="panel">
   <div class="transport">
     <button class="tr-btn play" id="playBtn">▶ PLAY</button>
@@ -314,7 +304,6 @@ canvas.mini-knob { width: 30px; height: 30px; cursor: ns-resize; touch-action: n
   </div>
 </div>
 
-<!-- KEYBOARD -->
 <div class="panel" style="padding:8px;">
   <div class="section-label">Keyboard — Octave <span id="octaveNum">4</span>
     <div style="display:flex;gap:4px;margin-left:auto;">
@@ -325,10 +314,7 @@ canvas.mini-knob { width: 30px; height: 30px; cursor: ns-resize; touch-action: n
   <div class="keys-wrap" id="keysWrap"></div>
 </div>
 
-</div><!-- end .app -->
-
-<!-- MIDI MODAL -->
-<div class="modal-overlay" id="midiModal">
+</div><div class="modal-overlay" id="midiModal">
   <div class="modal">
     <div class="modal-title">MIDI Map</div>
     <div class="modal-list" id="midiList"></div>
@@ -336,7 +322,6 @@ canvas.mini-knob { width: 30px; height: 30px; cursor: ns-resize; touch-action: n
   </div>
 </div>
 
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
 <script>
@@ -454,15 +439,28 @@ function setupFXChain() {
   }
   convolver.buffer = ir;
 
-  // Chain: masterGain → compressor → delay → distortion → analyser → destination
+  // --- TARS FIX: CORRECTED ROUTING ---
+  // Main Dry Path
   masterGain.connect(compressor);
+  compressor.connect(analyserNode);
+
+  // Reverb Path
   masterGain.connect(reverbGain);
   reverbGain.connect(convolver);
   convolver.connect(compressor);
+
+  // Delay Path
   delay.connect(delayGain);
-  compressor.connect(distGain);
+  delayGain.connect(compressor);
+
+  // Distortion Path
+  compressor.connect(distWs);
+  distWs.connect(distGain);
   distGain.connect(analyserNode);
+  
+  // Final Output
   analyserNode.connect(ac.destination);
+  // -----------------------------------
 
   delay.delayTime.value = 0.25;
 }
@@ -1233,3 +1231,5 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+
+```
