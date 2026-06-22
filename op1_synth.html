@@ -1,0 +1,705 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: transparent; font-family: var(--font-mono, monospace); }
+
+  .synth {
+    background: #1a1a1f;
+    border-radius: 18px;
+    border: 1.5px solid #333;
+    padding: 12px;
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+    color: #e8e8e0;
+    user-select: none;
+  }
+
+  .screen {
+    background: #0d1f17;
+    border-radius: 10px;
+    border: 1px solid #1e3a2a;
+    padding: 10px 12px 8px;
+    margin-bottom: 10px;
+    min-height: 80px;
+    position: relative;
+  }
+
+  .screen-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+  }
+
+  .screen-title {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: #3de87a;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .screen-mode {
+    font-size: 10px;
+    color: #3de87a;
+    background: #0a2e18;
+    border: 1px solid #1e5a32;
+    border-radius: 4px;
+    padding: 2px 7px;
+    letter-spacing: 0.1em;
+  }
+
+  .screen-viz {
+    width: 100%;
+    height: 42px;
+    display: block;
+  }
+
+  .mode-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 10px;
+  }
+
+  .mode-tab {
+    flex: 1;
+    padding: 5px 4px;
+    background: #262630;
+    border: 1px solid #333;
+    border-radius: 6px;
+    font-family: var(--font-mono, monospace);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: #888;
+    cursor: pointer;
+    text-align: center;
+    text-transform: uppercase;
+    transition: all 0.15s;
+  }
+
+  .mode-tab.active {
+    background: #1e3a2a;
+    border-color: #3de87a;
+    color: #3de87a;
+  }
+
+  .knobs-section {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .knob-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .knob-canvas {
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    touch-action: none;
+    display: block;
+  }
+
+  .knob-label {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    color: #666;
+    text-transform: uppercase;
+    text-align: center;
+  }
+
+  .knob-value {
+    font-size: 9px;
+    color: #3de87a;
+    text-align: center;
+  }
+
+  .seq-section {
+    background: #141418;
+    border-radius: 8px;
+    border: 1px solid #2a2a32;
+    padding: 8px;
+    margin-bottom: 10px;
+  }
+
+  .seq-label {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    color: #555;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .seq-steps {
+    display: grid;
+    grid-template-columns: repeat(16, 1fr);
+    gap: 3px;
+  }
+
+  .seq-step {
+    height: 20px;
+    background: #1e1e26;
+    border-radius: 3px;
+    border: 1px solid #2a2a35;
+    cursor: pointer;
+    transition: all 0.1s;
+    position: relative;
+  }
+
+  .seq-step.active {
+    background: #3de87a;
+    border-color: #3de87a;
+    box-shadow: 0 0 4px #3de87a55;
+  }
+
+  .seq-step.playing {
+    border-color: #fff;
+  }
+
+  .seq-step.active.playing {
+    background: #7cffa0;
+  }
+
+  .keys-section {
+    display: flex;
+    gap: 0;
+    height: 52px;
+    position: relative;
+    margin-bottom: 10px;
+    overflow: hidden;
+    border-radius: 6px;
+  }
+
+  .white-key {
+    flex: 1;
+    background: #e8e8e0;
+    border: 1px solid #555;
+    border-radius: 0 0 4px 4px;
+    cursor: pointer;
+    transition: background 0.08s;
+    position: relative;
+    z-index: 1;
+  }
+
+  .white-key:active, .white-key.pressed {
+    background: #b0f0c0;
+  }
+
+  .black-key {
+    position: absolute;
+    width: 7.5%;
+    height: 60%;
+    top: 0;
+    background: #1a1a1f;
+    border: 1px solid #444;
+    border-radius: 0 0 3px 3px;
+    cursor: pointer;
+    z-index: 2;
+    transition: background 0.08s;
+  }
+
+  .black-key:active, .black-key.pressed {
+    background: #1e5a32;
+  }
+
+  .transport {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .transport-btn {
+    background: #262630;
+    border: 1px solid #333;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-family: var(--font-mono, monospace);
+    font-size: 10px;
+    color: #888;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transition: all 0.1s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .transport-btn:active { transform: scale(0.96); }
+
+  .transport-btn.play-btn {
+    background: #1e3a2a;
+    border-color: #3de87a;
+    color: #3de87a;
+  }
+
+  .transport-btn.rec-btn {
+    border-color: #e84a4a;
+    color: #e84a4a;
+  }
+
+  .transport-btn.rec-btn.recording {
+    background: #3a1e1e;
+    animation: recBlink 0.8s step-end infinite;
+  }
+
+  @keyframes recBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .bpm-wrap {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .bpm-label {
+    font-size: 9px;
+    color: #555;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .bpm-val {
+    font-size: 13px;
+    color: #e8e8e0;
+    font-weight: 500;
+    min-width: 30px;
+    text-align: center;
+  }
+
+  .bpm-btn {
+    background: #1a1a1f;
+    border: 1px solid #333;
+    border-radius: 4px;
+    width: 18px;
+    height: 18px;
+    color: #888;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+</style>
+
+<h2 class="sr-only" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">Sintetizador portátil estilo OP-1 con síntesis FM, substractiva, wavetable y sampler</h2>
+
+<div class="synth" id="synth">
+
+  <div class="screen">
+    <div class="screen-top">
+      <span class="screen-title" id="engineLabel">FM SYNTH</span>
+      <span class="screen-mode" id="envLabel">ATK 12 DEC 40</span>
+    </div>
+    <canvas class="screen-viz" id="vizCanvas" width="320" height="42"></canvas>
+  </div>
+
+  <div class="mode-tabs">
+    <div class="mode-tab active" data-mode="fm">FM</div>
+    <div class="mode-tab" data-mode="sub">SUB</div>
+    <div class="mode-tab" data-mode="wave">WAVE</div>
+    <div class="mode-tab" data-mode="smp">SMPL</div>
+  </div>
+
+  <div class="knobs-section" id="knobsSection"></div>
+
+  <div class="seq-section">
+    <div class="seq-label">Secuenciador — 16 pasos</div>
+    <div class="seq-steps" id="seqSteps"></div>
+  </div>
+
+  <div class="keys-section" id="keysSection"></div>
+
+  <div class="transport">
+    <button class="transport-btn play-btn" id="playBtn">▶ PLAY</button>
+    <button class="transport-btn rec-btn" id="recBtn">● REC</button>
+    <div class="bpm-wrap">
+      <span class="bpm-label">BPM</span>
+      <button class="bpm-btn" id="bpmDown">−</button>
+      <span class="bpm-val" id="bpmVal">120</span>
+      <button class="bpm-btn" id="bpmUp">+</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let ctx = null;
+function getCtx() {
+  if (!ctx) ctx = new AudioCtx();
+  return ctx;
+}
+
+const modes = {
+  fm:   { label: 'FM SYNTH',   knobs: ['Ratio','Index','Feedback','Drive'], defaults:[50,40,20,30] },
+  sub:  { label: 'SUBTRACTIVE',knobs: ['Cutoff','Res','Env Amt','Attack'], defaults:[70,30,50,20] },
+  wave: { label: 'WAVETABLE',  knobs: ['Wave','Detune','Morph','Bright'], defaults:[30,50,60,40] },
+  smp:  { label: 'SAMPLER',    knobs: ['Speed','Start','Length','Pitch'], defaults:[50,10,90,50] }
+};
+
+let currentMode = 'fm';
+let knobValues = {};
+let seqPattern = new Array(16).fill(false);
+let seqPos = -1;
+let isPlaying = false;
+let isRecording = false;
+let bpm = 120;
+let seqInterval = null;
+let recordedNotes = [];
+
+function initKnobValues() {
+  Object.keys(modes).forEach(m => {
+    knobValues[m] = [...modes[m].defaults];
+  });
+}
+initKnobValues();
+
+const knobsSection = document.getElementById('knobsSection');
+const seqStepsEl = document.getElementById('seqSteps');
+const keysSection = document.getElementById('keysSection');
+
+function buildKnobs(mode) {
+  knobsSection.innerHTML = '';
+  const cfg = modes[mode];
+  cfg.knobs.forEach((name, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'knob-wrap';
+
+    const canvas = document.createElement('canvas');
+    canvas.className = 'knob-canvas';
+    canvas.width = 88; canvas.height = 88;
+    canvas.setAttribute('data-idx', i);
+
+    const label = document.createElement('div');
+    label.className = 'knob-label';
+    label.textContent = name;
+
+    const val = document.createElement('div');
+    val.className = 'knob-value';
+    val.id = `kval-${i}`;
+    val.textContent = knobValues[mode][i];
+
+    wrap.appendChild(canvas);
+    wrap.appendChild(label);
+    wrap.appendChild(val);
+    knobsSection.appendChild(wrap);
+
+    drawKnob(canvas, knobValues[mode][i]);
+    setupKnobInteraction(canvas, i, mode);
+  });
+}
+
+function drawKnob(canvas, value) {
+  const c = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const cx = w/2, cy = h/2, r = w*0.38;
+  const startAngle = Math.PI * 0.75;
+  const endAngle = Math.PI * 2.25;
+  const angle = startAngle + (endAngle - startAngle) * (value / 100);
+
+  c.clearRect(0, 0, w, h);
+
+  c.beginPath();
+  c.arc(cx, cy, r, startAngle, endAngle);
+  c.strokeStyle = '#2a2a35';
+  c.lineWidth = 5;
+  c.lineCap = 'round';
+  c.stroke();
+
+  c.beginPath();
+  c.arc(cx, cy, r, startAngle, angle);
+  c.strokeStyle = '#3de87a';
+  c.lineWidth = 5;
+  c.lineCap = 'round';
+  c.stroke();
+
+  c.beginPath();
+  c.arc(cx, cy, r * 0.72, 0, Math.PI * 2);
+  c.fillStyle = '#262630';
+  c.fill();
+  c.strokeStyle = '#333';
+  c.lineWidth = 1.5;
+  c.stroke();
+
+  const dotX = cx + Math.cos(angle) * r * 0.72;
+  const dotY = cy + Math.sin(angle) * r * 0.72;
+  c.beginPath();
+  c.arc(dotX, dotY, 3, 0, Math.PI * 2);
+  c.fillStyle = '#3de87a';
+  c.fill();
+}
+
+function setupKnobInteraction(canvas, idx, mode) {
+  let startY, startVal;
+
+  function onStart(y) {
+    startY = y;
+    startVal = knobValues[mode][idx];
+  }
+  function onMove(y) {
+    const delta = (startY - y) * 0.8;
+    knobValues[mode][idx] = Math.max(0, Math.min(100, Math.round(startVal + delta)));
+    drawKnob(canvas, knobValues[mode][idx]);
+    document.getElementById(`kval-${idx}`).textContent = knobValues[mode][idx];
+    updateEnvLabel();
+  }
+
+  canvas.addEventListener('mousedown', e => { onStart(e.clientY); });
+  window.addEventListener('mousemove', e => { if (startY !== undefined) onMove(e.clientY); });
+  window.addEventListener('mouseup', () => { startY = undefined; });
+
+  canvas.addEventListener('touchstart', e => { e.preventDefault(); onStart(e.touches[0].clientY); }, {passive:false});
+  canvas.addEventListener('touchmove', e => { e.preventDefault(); onMove(e.touches[0].clientY); }, {passive:false});
+  canvas.addEventListener('touchend', () => { startY = undefined; });
+}
+
+function buildSeq() {
+  seqStepsEl.innerHTML = '';
+  for (let i = 0; i < 16; i++) {
+    const step = document.createElement('div');
+    step.className = 'seq-step' + (seqPattern[i] ? ' active' : '');
+    step.setAttribute('data-idx', i);
+    step.addEventListener('click', () => {
+      seqPattern[i] = !seqPattern[i];
+      step.classList.toggle('active', seqPattern[i]);
+    });
+    seqStepsEl.appendChild(step);
+  }
+}
+
+function buildKeys() {
+  keysSection.innerHTML = '';
+  const whites = [0,2,4,5,7,9,11,12,14];
+  const keyWidth = 100 / whites.length;
+  const blackMap = {1:0.67, 3:1.67, 6:3.67, 8:4.67, 10:5.67, 13:7.67};
+
+  whites.forEach((semi, i) => {
+    const key = document.createElement('div');
+    key.className = 'white-key';
+    key.setAttribute('data-semi', semi);
+    key.style.width = keyWidth + '%';
+    keysSection.appendChild(key);
+    key.addEventListener('mousedown', () => playNote(semi));
+    key.addEventListener('touchstart', e => { e.preventDefault(); playNote(semi); }, {passive:false});
+  });
+
+  Object.entries(blackMap).forEach(([semi, pos]) => {
+    const key = document.createElement('div');
+    key.className = 'black-key';
+    key.setAttribute('data-semi', parseInt(semi));
+    key.style.left = (pos * keyWidth) + '%';
+    keysSection.appendChild(key);
+    key.addEventListener('mousedown', () => playNote(parseInt(semi)));
+    key.addEventListener('touchstart', e => { e.preventDefault(); playNote(parseInt(semi)); }, {passive:false});
+  });
+}
+
+function noteFreq(semi) {
+  return 261.63 * Math.pow(2, semi / 12);
+}
+
+function playNote(semi) {
+  const ac = getCtx();
+  const freq = noteFreq(semi);
+  const now = ac.currentTime;
+  const vals = knobValues[currentMode];
+
+  let src, filter, gain;
+  gain = ac.createGain();
+  gain.gain.setValueAtTime(0.001, now);
+  gain.gain.exponentialRampToValueAtTime(0.4, now + 0.02);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5 + (vals[0]||50)/200);
+  gain.connect(ac.destination);
+
+  if (currentMode === 'fm') {
+    const carrier = ac.createOscillator();
+    const modulator = ac.createOscillator();
+    const modGain = ac.createGain();
+    const ratio = 1 + (vals[0]||50) / 33;
+    const index = (vals[1]||40) * 3;
+    carrier.frequency.value = freq;
+    modulator.frequency.value = freq * ratio;
+    modGain.gain.value = index;
+    modulator.connect(modGain);
+    modGain.connect(carrier.frequency);
+    carrier.connect(gain);
+    modulator.start(now); modulator.stop(now + 0.8);
+    carrier.start(now); carrier.stop(now + 0.8);
+
+  } else if (currentMode === 'sub') {
+    const osc = ac.createOscillator();
+    const filt = ac.createBiquadFilter();
+    osc.type = 'sawtooth';
+    osc.frequency.value = freq;
+    filt.type = 'lowpass';
+    filt.frequency.value = 200 + (vals[0]||70) * 80;
+    filt.Q.value = (vals[1]||30) / 10;
+    osc.connect(filt);
+    filt.connect(gain);
+    osc.start(now); osc.stop(now + 0.8);
+
+  } else if (currentMode === 'wave') {
+    const osc1 = ac.createOscillator();
+    const osc2 = ac.createOscillator();
+    const types = ['sine','triangle','sawtooth','square'];
+    osc1.type = types[Math.floor((vals[0]||30) / 26)];
+    osc1.frequency.value = freq;
+    osc2.frequency.value = freq * 1.004;
+    osc2.type = 'triangle';
+    const g2 = ac.createGain(); g2.gain.value = 0.3;
+    osc1.connect(gain);
+    osc2.connect(g2); g2.connect(gain);
+    osc1.start(now); osc1.stop(now + 0.8);
+    osc2.start(now); osc2.stop(now + 0.8);
+
+  } else {
+    const osc = ac.createOscillator();
+    const pitchSemi = ((vals[3]||50) - 50) / 6;
+    osc.frequency.value = freq * Math.pow(2, pitchSemi / 12);
+    osc.type = 'triangle';
+    osc.connect(gain);
+    osc.start(now); osc.stop(now + 0.5);
+  }
+
+  if (isRecording) {
+    recordedNotes.push({ semi, time: now });
+  }
+
+  const allKeys = keysSection.querySelectorAll(`[data-semi="${semi}"]`);
+  allKeys.forEach(k => { k.classList.add('pressed'); setTimeout(()=>k.classList.remove('pressed'), 200); });
+}
+
+function startSeq() {
+  const interval = (60 / bpm / 4) * 1000;
+  seqInterval = setInterval(() => {
+    seqPos = (seqPos + 1) % 16;
+    const steps = seqStepsEl.querySelectorAll('.seq-step');
+    steps.forEach((s, i) => {
+      s.classList.toggle('playing', i === seqPos);
+    });
+    if (seqPattern[seqPos]) {
+      const semis = [0,5,7,12,0,4,7,12,2,5,9,12,0,4,7,10];
+      playNote(semis[seqPos] || 0);
+    }
+  }, interval);
+}
+
+function stopSeq() {
+  clearInterval(seqInterval);
+  seqInterval = null;
+  const steps = seqStepsEl.querySelectorAll('.seq-step');
+  steps.forEach(s => s.classList.remove('playing'));
+  seqPos = -1;
+}
+
+document.getElementById('playBtn').addEventListener('click', () => {
+  isPlaying = !isPlaying;
+  const btn = document.getElementById('playBtn');
+  if (isPlaying) {
+    btn.textContent = '⏹ STOP';
+    btn.style.background = '#2a1e3a';
+    btn.style.borderColor = '#a040e0';
+    btn.style.color = '#c070ff';
+    startSeq();
+  } else {
+    btn.textContent = '▶ PLAY';
+    btn.style.background = '#1e3a2a';
+    btn.style.borderColor = '#3de87a';
+    btn.style.color = '#3de87a';
+    stopSeq();
+  }
+});
+
+document.getElementById('recBtn').addEventListener('click', () => {
+  isRecording = !isRecording;
+  const btn = document.getElementById('recBtn');
+  btn.classList.toggle('recording', isRecording);
+  btn.textContent = isRecording ? '⏹ STOP REC' : '● REC';
+  if (isRecording) recordedNotes = [];
+});
+
+document.getElementById('bpmUp').addEventListener('click', () => {
+  bpm = Math.min(220, bpm + 1);
+  document.getElementById('bpmVal').textContent = bpm;
+  if (isPlaying) { stopSeq(); startSeq(); }
+});
+document.getElementById('bpmDown').addEventListener('click', () => {
+  bpm = Math.max(40, bpm - 1);
+  document.getElementById('bpmVal').textContent = bpm;
+  if (isPlaying) { stopSeq(); startSeq(); }
+});
+
+document.querySelectorAll('.mode-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.getAttribute('data-mode');
+    document.getElementById('engineLabel').textContent = modes[currentMode].label;
+    buildKnobs(currentMode);
+    updateEnvLabel();
+  });
+});
+
+function updateEnvLabel() {
+  const v = knobValues[currentMode];
+  const labels = {
+    fm: `RAT ${v[0]} IDX ${v[1]}`,
+    sub: `CUT ${v[0]} RES ${v[1]}`,
+    wave: `WVE ${v[0]} DET ${v[1]}`,
+    smp: `SPD ${v[0]} SRT ${v[1]}`
+  };
+  document.getElementById('envLabel').textContent = labels[currentMode];
+}
+
+function drawViz() {
+  const canvas = document.getElementById('vizCanvas');
+  const c = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  c.clearRect(0, 0, W, H);
+
+  const vals = knobValues[currentMode];
+  c.strokeStyle = '#3de87a';
+  c.lineWidth = 1.5;
+  c.beginPath();
+
+  const t = Date.now() / 1000;
+  const segments = 100;
+  for (let i = 0; i <= segments; i++) {
+    const x = (i / segments) * W;
+    let y;
+    const phase = (i / segments) * Math.PI * 4 + t * 2;
+    if (currentMode === 'fm') {
+      const mod = Math.sin(phase * (1 + vals[0]/60));
+      y = H/2 + Math.sin(phase + mod * (vals[1]/40)) * (H*0.35);
+    } else if (currentMode === 'sub') {
+      const saw = ((phase % (Math.PI*2)) / (Math.PI*2)) * 2 - 1;
+      y = H/2 + saw * H * 0.35 * (vals[0]/100);
+    } else if (currentMode === 'wave') {
+      const morphVal = vals[2] / 100;
+      y = H/2 + (Math.sin(phase) * (1-morphVal) + Math.sign(Math.sin(phase)) * morphVal) * H * 0.35;
+    } else {
+      y = H/2 + Math.sin(phase * 0.5) * Math.exp(-((i/segments)*3)) * H * 0.4;
+    }
+    i === 0 ? c.moveTo(x, y) : c.lineTo(x, y);
+  }
+  c.stroke();
+
+  requestAnimationFrame(drawViz);
+}
+
+buildKnobs(currentMode);
+buildSeq();
+buildKeys();
+drawViz();
+updateEnvLabel();
+</script>
